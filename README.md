@@ -1,6 +1,6 @@
 # semicompAFT
-The script for running the estimation process is called "Estimation". The cpp files should be read before running the estimation function.
-Here we list the arguments of the estimation function:
+The script for running the estimation process is called "Estimation". The RCPP.cpp file and rcpp_based_functions.R should be read before running the estimation function.
+Here we list the arguments of the estimation procedures:
 
 ## Estimation With Frailty - Function Arguments:
 X01 - covariate matrix for the healthy-illness transition.
