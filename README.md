@@ -11,7 +11,7 @@ X12 - covariate matrix for the illness-death transition.
 
 V - minimum of disease time, death time (from healthy state) or censoring time.
 
-W - minimum of death time (from diseased state) and censoring time. If the person died or was censored directly from healthy state, W should be set to 0.
+W - minimum of death time (from illness state) and censoring time. If the person died or was censored directly from healthy state, W should be set to 0.
 
 delta1 - 1 if V = illness time, 0 otherwise.
 
@@ -48,7 +48,7 @@ X12 - covariate matrix for the illness-death transition.
 
 V - minimum of disease time, death time (from healthy state) or censoring time.
 
-W - minimum of death time (from diseased state) and censoring time. If the person died or was censored directly from healthy state, W should be set to 0.
+W - minimum of death time (from illness state) and censoring time. If the person died or was censored directly from healthy state, W should be set to 0.
 
 delta1 - 1 if V = illness time, 0 otherwise.
 
