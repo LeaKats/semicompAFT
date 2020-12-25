@@ -3,7 +3,7 @@
 The script for running the estimation is called "Estimation function". The cpp files should be read before running the estimation function.
 Here we list the arguments of the estimation function:
 
-## Estimation With Frailty - Function Arguments:
+# Estimation With Frailty - Function Arguments:
 X01 - covariate matrix for the healthy-illness transition.
 X02 - covariate matrix for the healthy-death transition.
 X12 - covariate matrix for the illness-death transition.
@@ -23,7 +23,7 @@ B - number of required weighted bootstrap samples. Defaults to 100. Weights are 
 print - T if the iterative process should be printed, F  otherwise.
 save_res - T if the results should be save to the source current directory, F otherwise.
 
-## Estimation Without Frailty - Function Arguments:
+# Estimation Without Frailty - Function Arguments:
 X01 - covariate matrix for the healthy-illness transitio.
 X02 - covariate matrix for the healthy-death transition.
 X12 - covariate matrix for the illness-death transition.
