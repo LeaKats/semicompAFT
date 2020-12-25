@@ -4,7 +4,7 @@ The script for running the estimation is called "Estimation function". The cpp f
 Here we list the arguments of the estimation function:
 
 ## Estimation With Frailty - Function Arguments:
-X01 - covariate matrix for the healthy-illness transitio.
+X01 - covariate matrix for the healthy-illness transition.
 X02 - covariate matrix for the healthy-death transition.
 X12 - covariate matrix for the illness-death transition.
 V - minimum of disease time, death time (from healthy state) or censoring time.
