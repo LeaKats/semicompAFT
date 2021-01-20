@@ -1,5 +1,6 @@
 # semicompAFT
-The script for running the estimation process is called "semicompAFT". 
+The script for running the estimation procedure is called "semicompAFT". Before running the estimation procedure, the file "rcpp_based_functions.R" in this directory should be placed in the same working directory.
+
 Here we list the arguments of the estimation procedures:
 
 ## Estimation With Frailty - "estimation_with_frailty_f"
