@@ -37,8 +37,6 @@ B - number of required weighted bootstrap samples. Defaults to 100. Weights are 
 
 print - T if the iterative process should be printed, F  otherwise.
 
-save_res - T if the results should be saved to the current directory, F otherwise.
-
 ## Estimation Without Frailty - Function Arguments:
 X01 - covariate matrix for the healthy-illness transition.
 
@@ -63,5 +61,3 @@ zeta_h - zeta value in the bandwidth computation used for baseline hazard functi
 B - number of required weighted bootstrap samples. Defaults to 100. Weights are randomly sampled from the standard exponential distribution.
 
 print - T if the iterative process should be printed, F  otherwise.
-
-save_res - T if the results should be saved to the source directory, F otherwise.
