@@ -69,4 +69,4 @@ print - T if the iterative process should be printed, F  otherwise.
 
 
 ## Example for running the estimation procedure
-Example for running the estimation procedure based on a simulated data found in script named "example_with_simulated_data".
+Example for running the estimation procedure based on a simulated data found in the script named "example_with_simulated_data".
