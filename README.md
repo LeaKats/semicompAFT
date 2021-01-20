@@ -1,8 +1,10 @@
 # semicompAFT
-The script for running the estimation process is called "Estimation". 
+The script for running the estimation process is called "semicompAFT". 
 Here we list the arguments of the estimation procedures:
 
-## Estimation With Frailty - Function Arguments:
+## Estimation With Frailty - "estimation_with_frailty_f"
+Function Arguments:
+
 X01 - covariate matrix for the healthy-illness transition.
 
 X02 - covariate matrix for the healthy-death transition.
@@ -37,7 +39,10 @@ B - number of required weighted bootstrap samples. Defaults to 100. Weights are 
 
 print - T if the iterative process should be printed, F  otherwise.
 
-## Estimation Without Frailty - Function Arguments:
+## Estimation Without Frailty - "estimation_without_frailty_f"
+
+Function Arguments:
+
 X01 - covariate matrix for the healthy-illness transition.
 
 X02 - covariate matrix for the healthy-death transition.
