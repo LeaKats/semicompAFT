@@ -244,6 +244,7 @@ H0_hat_12_perturbed_f<-function(x,y,beta,gamma,a_n12,X12,V,W,delta1,delta3,G){
 
 # compute H0_12 at observed times
 H0_hat_12_observed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,delta3){
+  n<-length(V)
   exp_x_beta <- exp(-X12%*%beta)
   e_Rw12     <- W*exp_x_beta
   e_Rw12[delta1==0] <- 0
@@ -294,6 +295,7 @@ H0_hat_12_observed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,delta3){
 
 # compute perturbed H0_12 at observed times
 H0_hat_12_observed_perturbed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,delta3,G){
+  n<-length(V)
   exp_x_beta <- exp(-X12%*%beta)
   e_Rw12     <- W*exp_x_beta
   e_Rw12[delta1==0] <- 0
@@ -356,12 +358,12 @@ posterior_expectations<-function(sigma,delta1,delta2,delta3,H0_01_obs,H0_02_obs,
 }
 
 # estimating sigma
-sigma_opt<-function(init_sigma,sumE1,sumE2){
+sigma_opt<-function(init_sigma,sumE1,sumE2,n){
   optim(par=init_sigma,
         fn=function(x) {-( (1/x)*log(1/x)+(1/x-1)*sumE2/n-(1/x)*sumE1/n-log(gamma(1/x)) )},
         method="L-BFGS-B",lower=0.01)$par
 }
-sigma_opt2<-function(init_sigma,sumE1,sumE2){
+sigma_opt2<-function(init_sigma,sumE1,sumE2,n){
   optim(par=init_sigma,
         fn=function(x) {-( (1/x)*log(1/x)+(1/x-1)*sumE2/n-(1/x)*sumE1/n-log(gamma(1/x)) )},
         method="L-BFGS-B",lower=0.000001)$par
@@ -437,7 +439,7 @@ stat_f<-function(x,true_val){
 ##########
 
 # function for estimation with frailty
-estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=50,zeta_h=0.01,initial_sigma=100,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
+estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=65,zeta_h=0.01,initial_sigma=100,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
 {
   n_pars<-1+dim(X01)[2]+dim(X02)[2]+dim(X12)[2]
   n <- length(V)
@@ -578,7 +580,7 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
     sumE2_m_plus2 <- posterior_expectations_m_plus2[["sumE2"]]
     
     ## estimating sigma
-    sigma_m_plus2 <- sigma_opt(init_sigma = sigma_m_plus1,sumE1 = sumE1_m_plus2,sumE2 = sumE2_m_plus2)
+    sigma_m_plus2 <- sigma_opt(init_sigma = sigma_m_plus1,sumE1 = sumE1_m_plus2,sumE2 = sumE2_m_plus2,n=n)
     
     ## check for convergence 
     #betas' convergence
@@ -859,7 +861,7 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
 }
 
 #function for estimation without frailty
-estimation_without_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=50,zeta_h=0.01,B,print)
+estimation_without_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=65,zeta_h=0.01,B,print)
 {
   n_pars<-1+dim(X01)[2]+dim(X02)[2]+dim(X12)[2]
   n <- length(V)
@@ -1037,9 +1039,3 @@ rownames(result)<-c("sigma",paste0("beta01-",colnames(X01)),paste0("beta02-",col
 return(result<-cbind(coefficient=c(unlist(tau_conv_nf)[1:n_pars]),ESE=c(se_all_nf))
 )
 }
-
-
-# examples for estimation with or without frailty
-results_with_frailty<-estimation_with_frailty_f(X01=X01,X02=X02,X12=X12,V=V,W=W,delta1=delta1,delta2=delta2,delta3=delta3,B=100,print=T)
-
-results_without_frailty<-estimation_without_frailty_f(X01=X01,X02=X02,X12=X12,V=V,W=W,delta1=delta1,delta2=delta2,delta3=delta3,B=100,print=T)
