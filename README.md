@@ -21,7 +21,7 @@ delta2 - 1 if V = death time, 0 otherwise.
 
 delta3 - 1 if W = death time, 0 otherwise.
 
-zeta_beta - zeta value in the bandwidth computation used for betas estimation. Defaults to 50.
+zeta_beta - zeta value in the bandwidth computation used for betas estimation. Defaults to 65.
 
 zeta_h - zeta value in the bandwidth computation used for baseline hazard functions estimation. Defaults to 0.01.
 
@@ -59,10 +59,14 @@ delta2 - 1 if V = death time, 0 otherwise.
 
 delta3 - 1 if W = death time, 0 otherwise.
 
-zeta_beta - zeta value in the bandwidth computation used for betas estimation. Defaults to 50.
+zeta_beta - zeta value in the bandwidth computation used for betas estimation. Defaults to 65.
 
 zeta_h - zeta value in the bandwidth computation used for baseline hazard functions estimation. Defaults to 0.01.
 
 B - number of required weighted bootstrap samples. Defaults to 100. Weights are randomly sampled from the standard exponential distribution.
 
 print - T if the iterative process should be printed, F  otherwise.
+
+
+## Example for running the estimation procedure
+Example for running the estimation procedure based on a simulated data found in script named "example_with_simulated_data".
