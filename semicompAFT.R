@@ -1,4 +1,4 @@
-rm(list = ls())
+
 ###### Load required packages ######
 suppressPackageStartupMessages(library(Rcpp))
 suppressPackageStartupMessages(library(RcppArmadillo))
