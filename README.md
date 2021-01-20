@@ -1,5 +1,5 @@
 # semicompAFT
-The script for running the estimation process is called "Estimation". The RCPP.cpp and rcpp_based_functions.R files should be read before running the estimation functions.
+The script for running the estimation process is called "Estimation". 
 Here we list the arguments of the estimation procedures:
 
 ## Estimation With Frailty - Function Arguments:
