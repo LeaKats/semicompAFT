@@ -439,7 +439,7 @@ stat_f<-function(x,true_val){
 ##########
 
 # function for estimation with frailty
-estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=65,zeta_h=0.01,initial_sigma=100,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
+estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=65,zeta_h=0.01,initial_sigma=5,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
 {
   n_pars<-1+dim(X01)[2]+dim(X02)[2]+dim(X12)[2]
   n <- length(V)
