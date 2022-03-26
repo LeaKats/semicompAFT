@@ -26,7 +26,7 @@ zeta_beta - zeta value in the bandwidth computation used for betas estimation. D
 
 zeta_h - zeta value in the bandwidth computation used for baseline hazard functions estimation. Defaults to 0.01.
 
-initial_sigma - starting value for sigma. Defaults to 100.
+initial_sigma - starting value for sigma. Defaults to 5.
 
 conv_betas_bound - tolerance for betas' convergence. Defaults to 0.00001.
 
