@@ -1,4 +1,4 @@
-# RCPP based functions
+#RCPP based functions
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11")
 Sys.setenv("PKG_CXXFLAGS"="-fopenmp")
 Sys.setenv("PKG_LIBS"="-fopenmp")
