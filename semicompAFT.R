@@ -9,15 +9,12 @@ suppressPackageStartupMessages(library(lbfgs))
 suppressPackageStartupMessages(library(parallel))
 suppressPackageStartupMessages(library(doParallel))
 suppressPackageStartupMessages(library(foreach))
-#suppressPackageStartupMessages(library(matrixStats))
 suppressPackageStartupMessages(library(tidyr))
-#suppressPackageStartupMessages(library(distrEx))
 
 ###### load RCPP based functions ####
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11")
 Sys.setenv("PKG_CXXFLAGS"="-fopenmp")
 Sys.setenv("PKG_LIBS"="-fopenmp")
-#sourceCpp(file="RCPP.CPP")
 source("rcpp_based_functions.R")
 ###### R Functions ###########
 
@@ -26,7 +23,7 @@ bandwidths<-function(V,W,delta1,delta2,delta3,ah01,ah02,ah12){
   n<-length(V)
   delta1_0 <- delta1
   delta2_0 <- delta2
-  W      <- W[delta1_0==1]
+  W        <- W[delta1_0==1]
   delta3_0 <- delta3[delta1_0==1]
   sd1_ev <- sd(log(V[delta1_0==1]))
   sd1    <- sd(log(V))
@@ -56,7 +53,7 @@ h0_hat_01_02_f<-function(t,beta,gamma,a_n,X,V,delta){
   return(h)
 }
 
-# function for estimating perturbed h0_01 or h0_02
+# function for estimating bootstrap h0_01 or h0_02
 h0_hat_01_02_perturbed_f<-function(t,beta,gamma,a_n,X,V,delta,G){
   n   <- dim(X)[1]
   R   <- log(V)-X%*%beta
@@ -73,13 +70,13 @@ h0_hat_01_02_perturbed_f<-function(t,beta,gamma,a_n,X,V,delta,G){
 
 # compute integral of h0_01 or h0_02 from x to y
 H0_hat_01_02_f<-function(x,y,beta,gamma,a_n,X,V,delta){
-  int<-integrate(h0_hat_01_02_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,lower=x,upper=y,subdivisions = 1000)$val
+  int  <- integrate(h0_hat_01_02_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,lower=x,upper=y,subdivisions = 1000)$val
    return(int)
 }
 
-# compute integral of perturbed h0_01 or h0_02 from x to y
+# compute integral of bootstrap h0_01 or h0_02 from x to y
 H0_hat_01_02_perturbed_f<-function(x,y,beta,gamma,a_n,X,V,delta,G){
-  int<-integrate(h0_hat_01_02_perturbed_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,G=G,lower=x,upper=y,subdivisions = 10000,rel.tol = 1e-8)$val
+  int <-  integrate(h0_hat_01_02_perturbed_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,G=G,lower=x,upper=y,subdivisions = 10000,rel.tol = 1e-8)$val
   return(int)
 }
 
@@ -97,39 +94,31 @@ H0_hat_01_02_observed_f<-function(beta,gamma,a_n,X,V,delta){
   v1 <- foreach(i = 1:n
                 ,.combine = "rbind"
                 ,.export = c("h0_hat_01_02_f")
-                #,.noexport = c("dnormpar_mat","pnormpar_mat")
-                #,.packages = c("FrailtyAftDIMarma")
   ) %dopar% {
-    int<-#tryCatch({
-      #suppressWarnings (
-      integrate(h0_hat_01_02_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,lower=e_R1_ord2col[i,1],upper=e_R1_ord2col[i,2],subdivisions = 10000)$val
-    #)},error=function(e) NA)
+    int <- integrate(h0_hat_01_02_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,lower=e_R1_ord2col[i,1],upper=e_R1_ord2col[i,2],subdivisions = 10000)$val
     return(int)
   }
   parallel::stopCluster(cl)
-  
-  #v1<-mapply(FUN=H0_hat_01_02_f,e_R1_ord2col[,1],e_R1_ord2col[,2],MoreArgs=list(gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta))
-  
-  
+   
   if (sum(is.na(v1))>0){
-    v2               <- v1
-    v2[is.na(v1)]    <- 0
-    ind_na<-which(is.na(v1))
-    len_na<-length(ind_na)
-    v2<-cumsum(v2)
+    v2            <- v1
+    v2[is.na(v1)] <- 0
+    ind_na        <- which(is.na(v1))
+    len_na        <-length(ind_na)
+    v2            <-cumsum(v2)
     for (k in 1:len_na){
-      m<-ind_na[k]
-      int<-integrate(h0_hat_01_02_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,lower=0,upper=e_R1_ord2col[m,2],subdivisions = 1000)$val-sum(v2[1:(m-1)])
-      v2[m:n]<-v2[m:n]+int-v2[m]
+      m       <- ind_na[k]
+      int     <- integrate(h0_hat_01_02_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,lower=0,upper=e_R1_ord2col[m,2],subdivisions = 1000)$val-sum(v2[1:(m-1)])
+      v2[m:n] <- v2[m:n]+int-v2[m]
     }
-    v2    <- cbind(v2,e_R1_ord2col[,2],e_R1_ord2col[,3])
+    v2           <- cbind(v2,e_R1_ord2col[,2],e_R1_ord2col[,3])
     colnames(v2) <- c("integral_ord","e_R1_ord","order")
-    H01_m <- merge(e_R1,v2,by="order",sort=F)[,"integral_ord"]
+    H01_m        <- merge(e_R1,v2,by="order",sort=F)[,"integral_ord"]
     
   } else {
-    v1    <- cbind(cumsum(v1),e_R1_ord2col[,2],e_R1_ord2col[,3])
+    v1           <- cbind(cumsum(v1),e_R1_ord2col[,2],e_R1_ord2col[,3])
     colnames(v1) <- c("integral_ord","e_R1_ord","order")
-    H01_m <- merge(e_R1,v1,by="order",sort=F)[,"integral_ord"]
+    H01_m        <- merge(e_R1,v1,by="order",sort=F)[,"integral_ord"]
   }
   return(H01_m)
 }
@@ -148,23 +137,20 @@ H0_hat_01_02_observed_perturbed_f<-function(beta,gamma,a_n,X,V,delta,G){
   v1 <- foreach(i = 1:n
                 ,.combine = "rbind"
                 ,.export = c("h0_hat_01_02_perturbed_f")
-                #,.noexport = c("dnormpar_mat","pnormpar_mat_arma")
-                #,.packages = c("FrailtyAftDIMarma")
   ) %dopar% {
-    t<-try({
-      int<-integrate(h0_hat_01_02_perturbed_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,G=G,lower=e_R1_ord2col[i,1],upper=e_R1_ord2col[i,2],subdivisions = 1000)$val
+    t <-  try({
+      int <-   integrate(h0_hat_01_02_perturbed_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,G=G,lower=e_R1_ord2col[i,1],upper=e_R1_ord2col[i,2],subdivisions = 1000)$val
     })
     if (inherits(t, "try-error")) {
-      int<-distrEx::GLIntegrate(h0_hat_01_02_perturbed_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,G=G,lower=e_R1_ord2col[i,1],upper=e_R1_ord2col[i,2])
+      int <-  distrEx::GLIntegrate(h0_hat_01_02_perturbed_f,gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta,G=G,lower=e_R1_ord2col[i,1],upper=e_R1_ord2col[i,2])
     }
     return(int)
   }
   parallel::stopCluster(cl)
   
-  #v1<-mapply(FUN=H0_hat_01_02_f,e_R1_ord2col[,1],e_R1_ord2col[,2],MoreArgs=list(gamma=gamma,beta = beta,a_n=a_n,X=X,V=V,delta=delta))
-  v1    <- cbind(cumsum(v1),e_R1_ord2col[,2],e_R1_ord2col[,3])
+  v1           <- cbind(cumsum(v1),e_R1_ord2col[,2],e_R1_ord2col[,3])
   colnames(v1) <- c("integral_ord","e_R1_ord","order")
-  H01_m <- merge(e_R1,v1,by="order",sort=F)[,"integral_ord"]
+  H01_m        <- merge(e_R1,v1,by="order",sort=F)[,"integral_ord"]
   return(H01_m)
 }
 
@@ -174,14 +160,12 @@ h0_hat_12_f<-function(t,beta,gamma,a_n12,X12,V,W,delta1,delta3){
   W0       <- W[delta1==1]
   V0       <- V[delta1==1]
   delta3   <- delta3[delta1==1]
-  
   nR       <- dim(X0)[1]
   lt       <- length(t)
   x_beta   <- X0%*%beta
   R        <- log(W0)-x_beta
   mat_logt <- rep(log(t),each=nR)
   RRn      <- matrix(rep(R,lt)-mat_logt,nrow=nR)
-  
   R2v      <- log(V0)-x_beta
   RRn2v    <- matrix(rep(R2v,lt)-mat_logt,nrow=nR)
   
@@ -202,15 +186,13 @@ h0_hat_12_perturbed_f<-function(t,beta,gamma,a_n12,X12,V,W,delta1,delta3,G){
   X0       <- X12[delta1==1,]
   W0       <- W[delta1==1]
   V0       <- V[delta1==1]
-  delta3   <- delta3[delta1==1]
-  
+  delta3   <- delta3[delta1==1]  
   nR       <- dim(X0)[1]
   lt       <- length(t)
   x_beta   <- X0%*%beta
   R        <- log(W0)-x_beta
   mat_logt <- rep(log(t),each=nR)
   RRn      <- matrix(rep(R,lt)-mat_logt,nrow=nR)
-  
   R2v      <- log(V0)-x_beta
   RRn2v    <- matrix(rep(R2v,lt)-mat_logt,nrow=nR)
   
@@ -244,7 +226,7 @@ H0_hat_12_perturbed_f<-function(x,y,beta,gamma,a_n12,X12,V,W,delta1,delta3,G){
 
 # compute H0_12 at observed times
 H0_hat_12_observed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,delta3){
-  n<-length(V)
+  n          <- length(V)
   exp_x_beta <- exp(-X12%*%beta)
   e_Rw12     <- W*exp_x_beta
   e_Rw12[delta1==0] <- 0
@@ -258,13 +240,11 @@ H0_hat_12_observed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,delta3){
   
   times_ord2col <- cbind(c(0,times_ord[-2*n,1]),times_ord,1:(2*n))
   
-  cl<-parallel::makeCluster(4)
+  cl  <-  parallel::makeCluster(4)
   doParallel::registerDoParallel(cl) # register the cluster
   integral_interval <- foreach(i = 1:(2*n)
                                ,.combine = "rbind"
                                ,.export = c("h0_hat_12_f","H0_hat_12_f")
-                               #.noexport = c("dnormpar_mat","pnormpar_mat")
-                               # ,.packages = c("FrailtyAftDIMarma")
   ) %dopar% {
     int<-
       tryCatch({
@@ -274,8 +254,6 @@ H0_hat_12_observed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,delta3){
     return(int)
   }
   parallel::stopCluster(cl)
-  
-  #integral_interval<-mapply(FUN=H0_hat_12_f,times_ord2col[,1],times_ord2col[,2],MoreArgs=list(gamma=gamma,beta = beta,a_n12=a_n12,X12=X12,W=W,V=V,delta1=delta1,delta3=delta3))
   
   integral_cumsum      <- data.frame(integral=cumsum(integral_interval),type=times_ord2col[,"type"],order=times_ord2col[,"order"],times=times_ord2col[,2])
   integral_cumsum_wide <- spread(integral_cumsum[,-4],type,integral)
@@ -309,15 +287,12 @@ H0_hat_12_observed_perturbed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,del
   
   times_ord2col <- cbind(c(0,times_ord[-2*n,1]),times_ord,1:(2*n))
   
-  cl<-parallel::makeCluster(4)
+  cl  <-  parallel::makeCluster(4)
   doParallel::registerDoParallel(cl) # register the cluster
   integral_interval <- foreach(i = 1:(2*n)
                                ,.combine = "rbind"
                                ,.export = c("h0_hat_12_perturbed_f")
-                               #  ,.noexport = c("dnormpar_mat","pnormpar_mat_arma")
-                               #  ,.packages = c("FrailtyAftDIMarma")
   ) %dopar% {
-    #H0_hat_12_f(x=times_ord2col[i,1],y=times_ord2col[i,2],gamma=gamma,beta = beta,a_n12=a_n12,X12=X12,W=W,V=V,delta1=delta1,delta3=delta3)
     if (times_ord2col[i,1]==0) {int<-0} else {
       if (times_ord2col[i,2]==0) {int<-0} else {
         int<-tryCatch({
@@ -328,7 +303,6 @@ H0_hat_12_observed_perturbed_f_new<-function(beta,gamma,a_n12,X12,V,W,delta1,del
   }
   parallel::stopCluster(cl)
   
-  #integral_interval<-mapply(FUN=H0_hat_12_f,times_ord2col[,1],times_ord2col[,2],MoreArgs=list(gamma=gamma,beta = beta,a_n12=a_n12,X12=X12,W=W,V=V,delta1=delta1,delta3=delta3))
   integral_cumsum      <- data.frame(integral=cumsum(integral_interval),type=times_ord2col[,"type"],order=times_ord2col[,"order"],times=times_ord2col[,2])
   integral_cumsum_wide <- spread(integral_cumsum[,-4],type,integral)
   
@@ -359,21 +333,12 @@ posterior_expectations<-function(sigma,delta1,delta2,delta3,H0_01_obs,H0_02_obs,
 
 # estimating sigma
 sigma_opt<-function(init_sigma,sumE1,sumE2,n){
-  optim(par=init_sigma,
-        fn=function(x) {-( (1/x)*log(1/x)+(1/x-1)*sumE2/n-(1/x)*sumE1/n-log(gamma(1/x)) )},
-        method="L-BFGS-B",lower=0.01)$par
-}
-sigma_opt2<-function(init_sigma,sumE1,sumE2,n){
-  optim(par=init_sigma,
-        fn=function(x) {-( (1/x)*log(1/x)+(1/x-1)*sumE2/n-(1/x)*sumE1/n-log(gamma(1/x)) )},
-        method="L-BFGS-B",lower=0.000001)$par
+  optim(par=init_sigma,fn=function(x) {-( (1/x)*log(1/x)+(1/x-1)*sumE2/n-(1/x)*sumE1/n-log(gamma(1/x)) )}, method="L-BFGS-B",lower=0.01)$par
 }
 
 # data sampling function
 sample_data<-function(n,ber_p1,ber_p2,ber_p3,ber_p4,sigma,beta01,beta02,beta12,c01,c02,c12,m){
-  ###Normal variables
-  #X<-mvrnorm(n=n,mu=rep(mu,n_x), Sigma=Sigma_x)
-  
+ 
   ###Bernoulli variables
   X1 <- runif(n,-1,1)
   X2 <- rbinom(n,1,ber_p2)
@@ -394,20 +359,9 @@ sample_data<-function(n,ber_p1,ber_p2,ber_p3,ber_p4,sigma,beta01,beta02,beta12,c
   colnames(T1)<-c("T1")
   T2 <- sqrt(-2*log(unif02)*exp(2*X%*%beta02)/(c02*gamma))
   
-  #exp
-  #T1 <- -log(unif01)*exp(X%*%beta01)/(c01*gamma)
-  #colnames(T1)<-c("T1")
-  #T2 <- -log(unif02)*exp(X%*%beta02)/(c02*gamma)
-  
-  # T1 <- (unif01^(-1/gamma)-1)*exp(X%*%beta01)
-  # colnames(T1)<-c("T1")
-  # T2 <- (unif02^(-1/gamma)-1)*exp(X%*%beta02)
-  
   ##if T1<T2 then compute T12
   unif12       <- runif(n,min=0,max=1)
   T2_0         <- sqrt((-2*log(unif12)/(c12*gamma))*exp(2*X%*%beta12)+T1^2)
-  #T2_0         <-T1-log(unif12)*exp(X%*%beta12)/(c12*gamma)
-  #T2_0          <- T1*unif12^(-1/gamma)+(unif12^(-1/gamma)-1)*exp(X%*%beta12)
   T2[T2>T1]    <- T2_0[T2>T1]
   colnames(T2) <- c("T2")
   
@@ -418,8 +372,8 @@ sample_data<-function(n,ber_p1,ber_p2,ber_p3,ber_p4,sigma,beta01,beta02,beta12,c
   V      <- pmin(T1,T2,Cens); colnames(V) <- c("V")
   delta1 <- ifelse(T1<=pmin(T2,Cens),1,0); colnames(delta1) <- c("delta1")
   W      <- delta1*pmin(T2,Cens); colnames(W) <- c("W")
-  delta2 <- ifelse(T2<=pmin(T1,Cens),1,0); colnames(delta2)<-c("delta2")
-  delta3 <- delta1*(T2<=Cens); colnames(delta3)<-c("delta3")
+  delta2 <- ifelse(T2<=pmin(T1,Cens),1,0); colnames(delta2) <- c("delta2")
+  delta3 <- delta1*(T2<=Cens); colnames(delta3) <- c("delta3")
   
   ###data constraction
   data <- cbind(X,V,W,delta1,delta2,delta3,true_gamma=gamma)
@@ -439,7 +393,7 @@ stat_f<-function(x,true_val){
 ##########
 
 # function for estimation with frailty
-estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=65,zeta_h=0.01,initial_sigma=5,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
+estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=50,zeta_h=0.01,initial_sigma=2,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
 {
   n_pars<-1+dim(X01)[2]+dim(X02)[2]+dim(X12)[2]
   n <- length(V)
@@ -539,36 +493,27 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
     m<-m+1
     
     ## estimating Betas
-    #if(conv_beta01==F){
+    if(conv_beta01==F){
     l01 <- lbfgs(l_s_m_01_02_f.CPP(),grad_beta01_02_f.CPP(),vars=beta_hat_01_m, environment =env01,invisible = 1)
     beta_hat_01_m_plus1 <- l01$par
-    #} else {beta_hat_01_m_plus1 <- beta_hat_01_m}
+    } else {beta_hat_01_m_plus1 <- beta_hat_01_m}
     
-    #if(conv_beta02==F){
+    if(conv_beta02==F){
     l02 <- lbfgs(l_s_m_01_02_f.CPP(),grad_beta01_02_f.CPP(),vars=beta_hat_02_m, environment =env02,invisible = 1)
     beta_hat_02_m_plus1<-l02$par
-    #} else {beta_hat_02_m_plus1<-beta_hat_02_m}
+    } else {beta_hat_02_m_plus1<-beta_hat_02_m}
     
-    #if (conv_beta12==F){
+    if (conv_beta12==F){
     l12 <- lbfgs(l_s_m_12_f.CPP(),grad_beta12_f.CPP(),vars=beta_hat_12_m, environment =env12,invisible = 1,linesearch_algorithm = "LBFGS_LINESEARCH_BACKTRACKING")
     beta_hat_12_m_plus1 <- l12$par
-    #} else {beta_hat_12_m_plus1 <-beta_hat_12_m}
+    } else {beta_hat_12_m_plus1 <-beta_hat_12_m}
     
     ##estimating H0s
-    if ((conv_beta01&conv_Hs)==F){
     H0_01_obs_m_plus1 <- H0_hat_01_02_observed_f(beta=beta_hat_01_m_plus1,gamma=c(E1_m_plus1),a_n=a_n1,X=X01,V=V,delta=delta1)
-    } else {
-    H0_01_obs_m_plus1 <- H0_01_obs_m}
-    
-    if ((conv_beta02&conv_Hs)==F) {
+   
     H0_02_obs_m_plus1 <- H0_hat_01_02_observed_f(beta=beta_hat_02_m_plus1,gamma=c(E1_m_plus1),a_n=a_n2,X=X02,V=V,delta=delta2)
-    } else {
-    H0_02_obs_m_plus1 <- H0_02_obs_m}
     
-    if ((conv_beta12&conv_Hs)==F) {
     H0_12_obs_m_plus1 <- H0_hat_12_observed_f_new(beta=beta_hat_12_m_plus1,gamma=c(E1_m_plus1),a_n12=a_n12,X12=X12,V=V,W=W,delta1 = delta1,delta3 = delta3)
-    } else {
-    H0_12_obs_m_plus1 <- H0_12_obs_m}
     
     ## computing E1 and E2
     posterior_expectations_m_plus2 <- posterior_expectations(sigma=sigma_m_plus1,H0_01_obs_m_plus1,H0_02_obs_m_plus1,H0_12_obs_m_plus1,delta1=delta1,delta2=delta2,delta3=delta3)
@@ -592,7 +537,7 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
     if (mean(abs(H0_01_obs_m_plus1-H0_01_obs_m))<conv_Hs_bound) {conv_H0_01 <- T}
     if (mean(abs(H0_02_obs_m_plus1-H0_02_obs_m))<conv_Hs_bound) {conv_H0_02 <- T}
     if (mean(abs(H0_12_obs_m_plus1-H0_12_obs_m))<conv_Hs_bound) {conv_H0_12 <- T}
-    conv_Hs<-conv_H0_01&conv_H0_02&conv_H0_12
+    conv_Hs  <- conv_H0_01&conv_H0_02&conv_H0_12
     
     #sigmas' convergence
     if (abs(sigma_m_plus2-sigma_m_plus1)<conv_sigma_bound) {conv_sigma <- T}
@@ -641,9 +586,9 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
                          "illness","death01","death12","duration","iter_num")
   
   if(print==T){print(est_par)}
-  #write.table(est_par, file = paste0("eSigma_eHs_Be010212",".txt"), sep = "\t",row.names = F, col.names = F)
+  #write.table(est_par, file = paste0("est_pars",".txt"), sep = "\t",row.names = F, col.names = F)
   
-  # bootstrap for variance estimation
+  # Bootstrap for variance estimation
   if(B>0){
   if(print==T){print("Bootstrap process begun")}
   
@@ -740,31 +685,25 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
       m<-m+1
       
       ## estimating Betas
-      #if (conv_beta01==F) { 
+      if (conv_beta01==F) { 
       beta_hat_01_m_plus1 <- lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env01,vars=beta_hat_01_m,invisible = T)$par
-      #} else  {beta_hat_01_m_plus1 <-beta_hat_01_m}
+      } else  {beta_hat_01_m_plus1 <-beta_hat_01_m}
      
-      #if (conv_beta02==F) {
+      if (conv_beta02==F) {
       beta_hat_02_m_plus1 <- lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env02,beta_hat_02_m,invisible = T)$par
-      #} else {beta_hat_02_m_plus1 <-beta_hat_02_m}
+      } else {beta_hat_02_m_plus1 <-beta_hat_02_m}
       
-      #if (conv_beta12==F) {
+      if (conv_beta12==F) {
       l12 <- lbfgs(l_s_m_12pert_f.CPP(),grad_beta12pert_f.CPP(),env=env12,beta_hat_12_m,invisible = T,linesearch_algorithm = "LBFGS_LINESEARCH_BACKTRACKING")
       beta_hat_12_m_plus1 <- l12$par
-      #} else {beta_hat_12_m_plus1 <-beta_hat_12_m}
+      } else {beta_hat_12_m_plus1 <-beta_hat_12_m}
       
       #estimating H0s
-      if ((conv_beta01&conv_Hs)==F) {
         H0_01_obs_m_plus1 <- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_01_m_plus1,gamma=c(E1_m_plus1),a_n=a_n1,X=X01,V=V,delta=delta1,G=G)
-      } else {H0_01_obs_m_plus1 <- H0_01_obs_m}
-     
-      if ((conv_beta02&conv_Hs)==F) {
+      
         H0_02_obs_m_plus1 <- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_02_m_plus1,gamma=c(E1_m_plus1),a_n=a_n2,X=X02,V=V,delta=delta2,G=G)
-      } else {H0_02_obs_m_plus1 <- H0_02_obs_m}
-     
-      if ((conv_beta12&conv_Hs)==F) {
+      
         H0_12_obs_m_plus1 <- H0_hat_12_observed_perturbed_f_new (beta=beta_hat_12_m_plus1,gamma=c(E1_m_plus1),a_n12=a_n12,X12=X12,V=V,W=W,delta1 = delta1,delta3 = delta3,G=G)
-      } else {H0_12_obs_m_plus1 <- H0_12_obs_m}
      
       ## computing E1 and E2
       posterior_expectations_m_plus2 <- posterior_expectations(sigma=sigma_m_plus1,H0_01_obs_m_plus1,H0_02_obs_m_plus1,H0_12_obs_m_plus1,delta1=delta1,delta2=delta2,delta3=delta3)
@@ -822,6 +761,7 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
       sigma_m_plus1old <- sigma_m_plus1
       sigma_m_plus1    <- sigma_m_plus2
     }
+    
       sigma_pert0      <- sigma_m_plus1
       b01_pert0        <- beta_hat_01_m_plus1
       b02_pert0        <- beta_hat_02_m_plus1
@@ -861,7 +801,7 @@ estimation_with_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_be
 }
 
 #function for estimation without frailty
-estimation_without_frailty_f<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=65,zeta_h=0.01,B,print)
+estimation_without_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=50,zeta_h=0.01,B,print)
 {
   n_pars<-1+dim(X01)[2]+dim(X02)[2]+dim(X12)[2]
   n <- length(V)
@@ -913,8 +853,8 @@ env01[["gamma_m"]]             <- env02[["gamma_m"]]<- gamma_m
 env12[["gamma_m"]]             <- gamma_m[delta1==1]
 #########      
 # estimating Betas
-beta_hat_01_m <- lbfgs(l_s_m_01_02_f.CPP(),grad_beta01_02_f.CPP(),vars=aftsrr(Surv(V, delta1) ~ X01, se = "ISMB",B=0)$beta, environment =env01,invisible = 1)$par
-beta_hat_02_m <- lbfgs(l_s_m_01_02_f.CPP(),grad_beta01_02_f.CPP(),vars=aftsrr(Surv(V, delta2) ~ X02, se = "ISMB",B=0)$beta, environment =env02,invisible = 1)$par
+beta_hat_01_m <- lbfgs(l_s_m_01_02_f.CPP(),grad_beta01_02_f.CPP(),vars=rep(0,dim(X01)[2]), environment =env01,invisible = 1)$par
+beta_hat_02_m <- lbfgs(l_s_m_01_02_f.CPP(),grad_beta01_02_f.CPP(),vars=rep(0,dim(X02)[2]), environment =env02,invisible = 1)$par
 beta_hat_12_m <- lbfgs(l_s_m_12_f.CPP(),grad_beta12_f.CPP(),vars=rep(0,dim(X12)[2]), environment =env12,invisible = 1,linesearch_algorithm = "LBFGS_LINESEARCH_BACKTRACKING")$par
 
 # estimating H0s
@@ -982,11 +922,11 @@ while (max(0,dim(b01_pert)[2])<B){
   env12$G   <-G[delta1==1]
   env12$G0  <-G[delta3==1]
   
-  m= 1
-  gamma_m<-rep(1,n)
-  sigma_m<-NA
-  env01$gamma_m<-env02$gamma_m<-gamma_m
-  env12$gamma_m<-gamma_m[delta1==1]
+  m       <- 1
+  gamma_m <- rep(1,n)
+  sigma_m <- NA
+  env01$gamma_m <- env02$gamma_m<-gamma_m
+  env12$gamma_m <- gamma_m[delta1==1]
 
     beta_hat_01_m <-lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env01,vars=tau_conv_nf$beta01_conv,invisible = T)$par
     beta_hat_02_m <-lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env02,vars=tau_conv_nf$beta02_conv,invisible = T)$par
@@ -998,20 +938,20 @@ while (max(0,dim(b01_pert)[2])<B){
     print(paste("b02=",round(beta_hat_02_m,10)))
     print(paste("b12=",round(beta_hat_12_m,10)))
   
-    sigma_pert0<-NA
-    b01_pert0<-beta_hat_01_m
-    b02_pert0<-beta_hat_02_m
-    b12_pert0<-beta_hat_12_m
-    boot_time0<-difftime(Sys.time(), aa, units = "hours")
-    iter0<-m
+    sigma_pert0 <- NA
+    b01_pert0   <- beta_hat_01_m
+    b02_pert0   <- beta_hat_02_m
+    b12_pert0   <- beta_hat_12_m
+    boot_time0  <- difftime(Sys.time(), aa, units = "hours")
+    iter0       <- m
 
-      sigma_pert<-cbind(sigma_pert,sigma_pert0)
-      b01_pert<-cbind(b01_pert,b01_pert0)
-      b02_pert<-cbind(b02_pert,b02_pert0)
-      b12_pert<-cbind(b12_pert,b12_pert0)
-      boot_time0<-difftime(Sys.time(), aa, units = "hours")
-      boot_time<-cbind(boot_time,boot_time0)
-      iter<-cbind(iter,iter0)
+    sigma_pert  <- cbind(sigma_pert,sigma_pert0)
+    b01_pert    <- cbind(b01_pert,b01_pert0)
+    b02_pert    <- cbind(b02_pert,b02_pert0)
+    b12_pert    <- cbind(b12_pert,b12_pert0)
+    boot_time0  <- difftime(Sys.time(), aa, units = "hours")
+    boot_time   <- cbind(boot_time,boot_time0)
+    iter        <- cbind(iter,iter0)
       
     print(iter0)
     print(paste(i,dim(b01_pert)[2]))
@@ -1020,22 +960,22 @@ while (max(0,dim(b01_pert)[2])<B){
                              paste0("beta02-",colnames(X02)),
                              paste0("beta12-",colnames(X12)),
                              "boot_time","m","boots_i")
-    #write.csv(pert_all,file=paste0(dir,"pert_all_nf",".csv"))
+    #write.csv(pert_all,file=paste0(dir,"bootstrap_all_no_frailty",".csv"))
     i=i+1
 }
 
-se_sigma<-sqrt(diag(cov(t(sigma_pert))))
-se_b01<-sqrt(diag(cov(t(b01_pert))))
-se_b02<-sqrt(diag(cov(t(b02_pert))))
-se_b12<-sqrt(diag(cov(t(b12_pert))))
+se_sigma  <- sqrt(diag(cov(t(sigma_pert))))
+se_b01    <- sqrt(diag(cov(t(b01_pert))))
+se_b02    <- sqrt(diag(cov(t(b02_pert))))
+se_b12    <- sqrt(diag(cov(t(b12_pert))))
 
-se_all_nf<-cbind(se_sigma, t(se_b01), t(se_b02),t(se_b12))
-colnames(se_all_nf)<-c("sigma",paste0("beta01-",colnames(X01)),paste0("beta02-",colnames(X02)),paste0("beta12-",colnames(X12)))
+se_all_nf <- cbind(se_sigma, t(se_b01), t(se_b02),t(se_b12))
+colnames(se_all_nf) <- c("sigma",paste0("beta01-",colnames(X01)),paste0("beta02-",colnames(X02)),paste0("beta12-",colnames(X12)))
+
 } else {se_all_nf=NA}
 
-result<-cbind(coefficient=c(unlist(tau_conv_nf)[1:n_pars]),ESE=c(se_all_nf))
-rownames(result)<-c("sigma",paste0("beta01-",colnames(X01)),paste0("beta02-",colnames(X02)),paste0("beta12-",colnames(X12)))
-
-return(result<-cbind(coefficient=c(unlist(tau_conv_nf)[1:n_pars]),ESE=c(se_all_nf))
+result <- cbind(coefficient=c(unlist(tau_conv_nf)[1:n_pars]),ESE=c(se_all_nf))
+rownames(result) <- c("sigma",paste0("beta01-",colnames(X01)),paste0("beta02-",colnames(X02)),paste0("beta12-",colnames(X12)))
+return( result <-cbind(coefficient=c(unlist(tau_conv_nf)[1:n_pars]),ESE=c(se_all_nf))
 )
 }
