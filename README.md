@@ -36,7 +36,7 @@ conv_sigma_bound - tolerance for sigma's convergence. Default value is 0.0001.
 
 stop_iter_num - maximal number of iterations. Default value is 1000.
 
-B - number of required weighted bootstrap samples. Defaults to 100. Weights are randomly sampled from the standard exponential distribution.
+B - number of weighted bootstrap samples. Defaults to 100. Weights are randomly sampled from the standard exponential distribution.
 
 print - T if the iterative process should be printed, F  otherwise.
 
