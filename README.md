@@ -26,15 +26,15 @@ zeta_beta - zeta value in the bandwidth computation used for betas estimation. D
 
 zeta_h - zeta value in the bandwidth computation used for baseline hazard functions estimation. Defaults to 0.01.
 
-initial_sigma - starting value for sigma. Defaults to 2
+initial_sigma - starting value for sigma. Default value is 2
 
-conv_betas_bound - tolerance for betas' convergence. Defaults to 0.00001.
+conv_betas_bound - tolerance for betas' convergence. Default value is 0.00001.
 
-conv_Hs_bound - tolerance for cumulative hazard functions' convergence. Defaults to 0.0001.
+conv_Hs_bound - tolerance for cumulative hazard functions' convergence. Default value is 0.0001.
 
-conv_sigma_bound - tolerance for sigma's convergence. Defaults to 0.0001.
+conv_sigma_bound - tolerance for sigma's convergence. Default value is 0.0001.
 
-stop_iter_num - maximal number of iterations. Defaults to 1000.
+stop_iter_num - maximal number of iterations. Default value is 1000.
 
 B - number of required weighted bootstrap samples. Defaults to 100. Weights are randomly sampled from the standard exponential distribution.
 
@@ -60,14 +60,14 @@ delta2 - 1 if V = death time, 0 otherwise.
 
 delta3 - 1 if W = death time, 0 otherwise.
 
-zeta_beta - zeta value in the bandwidth computation used for betas estimation. Defaults to 50
+zeta_beta - zeta value in the bandwidth computation used for betas estimation. Default value is 50
 
-zeta_h - zeta value in the bandwidth computation used for baseline hazard functions estimation. Defaults to 0.01.
+zeta_h - zeta value in the bandwidth computation used for baseline hazard functions estimation. Default value is 0.01.
 
-B - number of required weighted bootstrap samples. Defaults to 100. Weights are randomly sampled from the standard exponential distribution.
+B - number of required weighted bootstrap samples. Default value is 100. Weights are randomly sampled from the standard exponential distribution.
 
 print - T if the iterative process should be printed, F  otherwise.
 
 
 ## Example for running the estimation procedure
-Example for running the estimation procedure based on a simulated data found in the script named "example_with_simulated_data".
+Example for running the estimation procedure based on a simulated data can be found in the script named "example_with_simulated_data".
