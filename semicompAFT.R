@@ -16,6 +16,7 @@ Sys.setenv("PKG_CXXFLAGS"="-std=c++11")
 Sys.setenv("PKG_CXXFLAGS"="-fopenmp")
 Sys.setenv("PKG_LIBS"="-fopenmp")
 source("rcpp_based_functions.R")
+
 ###### R Functions ###########
 
 # function for computing bandwidths 
@@ -390,7 +391,7 @@ stat_f<-function(x,true_val){
   return(stat)
 }
 
-##########
+########## Estimation functions
 
 # function for estimation with frailty
 estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta=50,zeta_h=0.01,initial_sigma=2,stop_iter_num=1000,conv_betas_bound=0.00001,conv_Hs_bound=0.0001,conv_sigma_bound=0.0001,B,print)
@@ -415,7 +416,7 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
   gamma_m <- initial_gamma
   sigma_m <- initial_sigma
   
-  ####set envitronments for cpp functions####
+  ####set environments for cpp functions####
   #environment for optimization of l01
   env01             <- new.env()
   env01[["X"]]      <- X01
@@ -444,14 +445,15 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
   env12[["n"]]      <- n
   ######
   a <- Sys.time()
-  # set overall nvironments values for cpp functions
+  # set overall environments values for cpp functions
   env01[["gamma_m"]] <- env02[["gamma_m"]] <- gamma_m
   env12[["gamma_m"]] <- gamma_m[delta1==1]
   
   # estimating Betas
   beta_hat_01_m <- aftsrr(Surv(V, delta1) ~ X01, se = "ISMB",B=0)$beta
   beta_hat_02_m <- aftsrr(Surv(V, delta2) ~ X02, se = "ISMB",B=0)$beta
-  beta_hat_12_m <- rep(0,dim(X12)[2])
+  beta_hat_12_m <- aftsrr(Surv(W[delta1==1], delta3[delta1==1]) ~ X12[delta1==1,], se = "ISMB",B=0)$beta
+
 
   # estimating H0s
   H0_01_obs_m  <- H0_hat_01_02_observed_f(beta=beta_hat_01_m,gamma=gamma_m,a_n=a_n1,X=X01,V=V,delta=delta1)
@@ -503,17 +505,32 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
     beta_hat_02_m_plus1<-l02$par
     } else {beta_hat_02_m_plus1<-beta_hat_02_m}
     
-    if (conv_beta12==F){
+    if (conv_beta01==T&conv_beta02==T){
     l12 <- lbfgs(l_s_m_12_f.CPP(),grad_beta12_f.CPP(),vars=beta_hat_12_m, environment =env12,invisible = 1,linesearch_algorithm = "LBFGS_LINESEARCH_BACKTRACKING")
     beta_hat_12_m_plus1 <- l12$par
     } else {beta_hat_12_m_plus1 <-beta_hat_12_m}
     
     ##estimating H0s
-    H0_01_obs_m_plus1 <- H0_hat_01_02_observed_f(beta=beta_hat_01_m_plus1,gamma=c(E1_m_plus1),a_n=a_n1,X=X01,V=V,delta=delta1)
-   
-    H0_02_obs_m_plus1 <- H0_hat_01_02_observed_f(beta=beta_hat_02_m_plus1,gamma=c(E1_m_plus1),a_n=a_n2,X=X02,V=V,delta=delta2)
+    start<-Sys.time()
+    if ((conv_beta01&conv_Hs)==F){
+      H0_01_obs_m_plus1 <-H0_hat_01_02_observed_f(beta=beta_hat_01_m_plus1,gamma=c(E1_m_plus1),a_n=a_n1,X=X01,V=V,delta=delta1)
+    } else {H0_01_obs_m_plus1<-H0_01_obs_m}
+    end<-Sys.time()
+    #print(end-start)
     
-    H0_12_obs_m_plus1 <- H0_hat_12_observed_f_new(beta=beta_hat_12_m_plus1,gamma=c(E1_m_plus1),a_n12=a_n12,X12=X12,V=V,W=W,delta1 = delta1,delta3 = delta3)
+    start<-Sys.time()
+    if ((conv_beta02&conv_Hs)==F) {
+      H0_02_obs_m_plus1<- H0_hat_01_02_observed_f(beta=beta_hat_02_m_plus1,gamma=c(E1_m_plus1),a_n=a_n2,X=X02,V=V,delta=delta2)
+    } else {H0_02_obs_m_plus1<-H0_02_obs_m}
+    end<-Sys.time()
+    #print(end-start)
+    
+    start<-Sys.time()
+    if ((conv_beta12&conv_Hs)==F) {
+      H0_12_obs_m_plus1<-H0_hat_12_observed_f_new(beta=beta_hat_12_m_plus1,gamma=c(E1_m_plus1),a_n12=a_n12,X12=X12,V=V,W=W,delta1 = delta1,delta3 = delta3)
+    } else {H0_12_obs_m_plus1<-H0_12_obs_m}
+    end<-Sys.time()
+    #print(end-start)
     
     ## computing E1 and E2
     posterior_expectations_m_plus2 <- posterior_expectations(sigma=sigma_m_plus1,H0_01_obs_m_plus1,H0_02_obs_m_plus1,H0_12_obs_m_plus1,delta1=delta1,delta2=delta2,delta3=delta3)
@@ -545,7 +562,7 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
     #overall convergence
     conv <- conv_sigma&conv_Hs&conv_beta01&conv_beta02&conv_beta12
     
-    ## print the results of current iterration
+    ## print the results of current iteration
     if (print==T){
     itter_time<-round(Sys.time()-init,2)
     print(paste("iteration m=",m))
@@ -553,7 +570,7 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
     print(paste0(colnames(X02),"_02=",round(beta_hat_02_m_plus1,6)))
     print(paste0(colnames(X12),"_12=",round(beta_hat_12_m_plus1,6)))
     print(paste("s=",round(sigma_m_plus2,6)))
-    print(paste("conv_betas=",conv_beta01,conv_beta02,conv_beta12,"   ","conv_H0s=",conv_H0_01,conv_H0_02,conv_H0_12,"    conv_sigma=",conv_sigma,"    sigma_diff=",abs(sigma_m_plus2-sigma_m_plus1)))
+    print(paste("conv_betas=",conv_beta01,conv_beta02,conv_beta12,"   ","conv_H0s=",conv_H0_01,conv_H0_02,conv_H0_12,"    conv_sigma=",conv_sigma,"    sigma_diff=",round(abs(sigma_m_plus2-sigma_m_plus1),6)))
     print(paste("time=",itter_time,"  sumE1=",round(sumE1_m_plus2,3),"  sumE2=",round(sumE2_m_plus2,3)))
     }
     
@@ -586,8 +603,7 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
                          "illness","death01","death12","duration","iter_num")
   
   if(print==T){print(est_par)}
-  #write.table(est_par, file = paste0("est_pars",".txt"), sep = "\t",row.names = F, col.names = F)
-  
+
   # Bootstrap for variance estimation
   if(B>0){
   if(print==T){print("Bootstrap process begun")}
@@ -641,9 +657,9 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
     env12$gamma_m <- gamma_m[delta1==1]
     
     # estimating Betas
-    beta_hat_01_m <- as.numeric(tau_conv[grepl('beta01_conv',names(tau_conv))])
-    beta_hat_02_m <- as.numeric(tau_conv[grepl('beta02_conv',names(tau_conv))])
-    beta_hat_12_m <- as.numeric(tau_conv[grepl('beta12_conv',names(tau_conv))])
+    beta_hat_01_m <-  lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env01,vars=as.numeric(tau_conv[ ,grep("beta01_conv",colnames(tau_conv))]),invisible = T)$par
+    beta_hat_02_m <-  lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env02,vars=as.numeric(tau_conv[ ,grep("beta02_conv",colnames(tau_conv))]),invisible = T)$par
+    beta_hat_12_m <-  aftsrr(Surv(W[delta1==1], delta3[delta1==1]) ~ X12[delta1==1,], se = "ISMB",B=0)$beta
     
     # estimating H0s
     H0_01_obs_m   <- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_01_m,gamma=c(gamma_m),a_n=a_n1,X=X01,V=V,delta=delta1,G=G)
@@ -693,18 +709,32 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
       beta_hat_02_m_plus1 <- lbfgs(l_s_m_01_02pert_f.CPP(),grad_beta01_02pert_f.CPP(),env=env02,beta_hat_02_m,invisible = T)$par
       } else {beta_hat_02_m_plus1 <-beta_hat_02_m}
       
-      if (conv_beta12==F) {
+      if (conv_beta01==T&conv_beta02==T) {
       l12 <- lbfgs(l_s_m_12pert_f.CPP(),grad_beta12pert_f.CPP(),env=env12,beta_hat_12_m,invisible = T,linesearch_algorithm = "LBFGS_LINESEARCH_BACKTRACKING")
       beta_hat_12_m_plus1 <- l12$par
       } else {beta_hat_12_m_plus1 <-beta_hat_12_m}
       
       #estimating H0s
-        H0_01_obs_m_plus1 <- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_01_m_plus1,gamma=c(E1_m_plus1),a_n=a_n1,X=X01,V=V,delta=delta1,G=G)
+      start<-Sys.time()
+      if ((conv_beta01&conv_Hs)==F) {
+        H0_01_obs_m_plus1 <- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_01_m_plus1,gamma=c(E1_m_plus1),a_n=a_n1,X=X01,V=V,delta=delta1,G=G1)
+      } else {H0_01_obs_m_plus1 <-H0_01_obs_m}
+      end<-Sys.time()
+      #print(end-start)
       
-        H0_02_obs_m_plus1 <- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_02_m_plus1,gamma=c(E1_m_plus1),a_n=a_n2,X=X02,V=V,delta=delta2,G=G)
+      start<-Sys.time()
+      if ((conv_beta02&conv_Hs)==F) {
+        H0_02_obs_m_plus1<- H0_hat_01_02_observed_perturbed_f(beta=beta_hat_02_m_plus1,gamma=c(E1_m_plus1),a_n=a_n2,X=X02,V=V,delta=delta2,G=G2)
+      } else {H0_02_obs_m_plus1<-H0_02_obs_m}
+      end<-Sys.time()
+      #print(end-start)
       
-        H0_12_obs_m_plus1 <- H0_hat_12_observed_perturbed_f_new (beta=beta_hat_12_m_plus1,gamma=c(E1_m_plus1),a_n12=a_n12,X12=X12,V=V,W=W,delta1 = delta1,delta3 = delta3,G=G)
-     
+      start<-Sys.time()
+      if ((conv_beta12&conv_Hs)==F) {
+        H0_12_obs_m_plus1<-H0_hat_12_observed_perturbed_f_new (beta=beta_hat_12_m_plus1,gamma=c(E1_m_plus1),a_n12=a_n12,X12=X12,V=V,W=W,delta1 = delta1,delta3 = delta3,G=G12)
+      } else {H0_12_obs_m_plus1<-H0_12_obs_m}
+      end<-Sys.time()  
+      
       ## computing E1 and E2
       posterior_expectations_m_plus2 <- posterior_expectations(sigma=sigma_m_plus1,H0_01_obs_m_plus1,H0_02_obs_m_plus1,H0_12_obs_m_plus1,delta1=delta1,delta2=delta2,delta3=delta3)
       E1_m_plus2                     <- posterior_expectations_m_plus2[["E1"]]
@@ -724,7 +754,9 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
       #betas' convergence
       if ((sum(abs(beta_hat_01_m_plus1-beta_hat_01_m)<conv_betas_bound))==length(beta_hat_01_m)) {conv_beta01 <- T}
       if ((sum(abs(beta_hat_02_m_plus1-beta_hat_02_m)<conv_betas_bound))==length(beta_hat_02_m)) {conv_beta02 <- T}
-      if ((sum(abs(beta_hat_12_m_plus1-beta_hat_12_m)<conv_betas_bound))==length(beta_hat_12_m)) {conv_beta12 <- T}
+      if(conv_beta01==T&conv_beta02==T){
+        if ((sum(abs(beta_hat_12_m_plus1-beta_hat_12_m)<conv_betas_bound))==length(beta_hat_12_m)) {conv_beta12 <- T}
+      }
       
       #H0s' convergence
       if (mean(abs(H0_01_obs_m_plus1-H0_01_obs_m))<conv_Hs_bound) {conv_H0_01 <- T}
@@ -735,10 +767,10 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
       #sigmas' convergence
       if (abs(sigma_m_plus2-sigma_m_plus1)<conv_sigma_bound) {conv_sigma <- T}
       
-      #define when the simulation finaly converged
+      #define when the simulation finally converged
       conv <- conv_sigma&conv_beta01&conv_beta02&conv_beta12&conv_Hs
       
-      ## print the results of current iterration
+      ## print the results of current iteration
       if (print==T){
       itter_time <- round(Sys.time()-init,2)
       print(paste("m=",m))
@@ -746,7 +778,7 @@ estimation_with_frailty<-function(X01,X02,X12,V,W,delta1,delta2,delta3,zeta_beta
       print(paste("b02=",round(beta_hat_02_m_plus1,6)))
       print(paste("b12=",round(beta_hat_12_m_plus1,6)))
       print(paste("s=",round(sigma_m_plus2,6)))
-      print(paste("conv_betas=",conv_beta01,conv_beta02,conv_beta12,"   ","conv_H0s=",conv_H0_01,conv_H0_02,conv_H0_12,"    conv_sigma=",conv_sigma,"    sigma_diff=",abs(sigma_m_plus2-sigma_m_plus1)))
+      print(paste("conv_betas=",conv_beta01,conv_beta02,conv_beta12,"   ","conv_H0s=",conv_H0_01,conv_H0_02,conv_H0_12,"    conv_sigma=",conv_sigma,"    sigma_diff=",round(abs(sigma_m_plus2-sigma_m_plus1),6)))
       print(paste("time=",itter_time,"  sumE1=",round(sumE1_m_plus2,2),"  sumE2=",round(sumE2_m_plus2,2)))
       }
       
