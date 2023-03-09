@@ -1,7 +1,8 @@
+###### load RCPP based functions ####
 source("semicompAFT.R")
 
-n<-500   #number of observations
-sigma<-2 #true sigma
+n<-1000   #number of observations
+sigma<-0.5 #true sigma
 c01<-2  #true h0_01
 c02<-3  #true h0_02
 c12<-2  #true h0_12
@@ -26,8 +27,9 @@ var_index01<-c(1,2)
 var_index02<-c(2,3)
 var_index12<-c(1,2,4)
 
-set.seed(1)
-# data sampling function
+set.seed(3)
+
+#data sampling function
 #change gamma with of without frailty
 sample_data<-function(n,ber_p1,ber_p2,ber_p3,ber_p4,sigma,beta01,beta02,beta12,c01,c02,c12,m){
   ###Bernoulli variables
@@ -40,8 +42,8 @@ sample_data<-function(n,ber_p1,ber_p2,ber_p3,ber_p4,sigma,beta01,beta02,beta12,c
   
   ###sample frailty values
   
-  gamma <- rep(1,n) #without frailty
-  #gamma <-rgamma(n,shape=1/sigma,scale=sigma) #with frailty
+  #gamma <- rep(1,n) #without frailty
+  gamma <-rgamma(n,shape=1/sigma,scale=sigma) #with frailty
   
   ###compute the failure times
   unif01 <- runif(n,min=0,max=1)
@@ -90,8 +92,9 @@ delta3<-data[,"delta3"]
 V<-data[,"V"]
 W<-delta1*data[,"W"]
 
-# without frailty
-(results_without_frailty<-estimation_without_frailty(X01=X01,X02=X02,X12=X12,V=V,W=W,delta1=delta1,delta2=delta2,delta3=delta3,B=0,print=T))
 
 # with frailty
 results_with_frailty<-estimation_with_frailty(X01=X01,X02=X02,X12=X12,V=V,W=W,delta1=delta1,delta2=delta2,delta3=delta3,B=0,print=T)
+
+# without frailty
+results_without_frailty<-estimation_without_frailty(X01=X01,X02=X02,X12=X12,V=V,W=W,delta1=delta1,delta2=delta2,delta3=delta3,B=0,print=T)
