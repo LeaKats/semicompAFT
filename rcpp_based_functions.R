@@ -1,18 +1,17 @@
 #RCPP based functions
-###### Rcpp Functions for Normal kernel ####
+###### Rcpp Functions for Normal kernel oi####
 {
-  Sys.setenv(BINPREF = "C:/rtools40/mingw64/bin/")
   Sys.setenv("PKG_CXXFLAGS"="-std=c++11")
   Sys.setenv("PKG_CXXFLAGS"="-fopenmp")
   Sys.setenv("PKG_LIBS"="-fopenmp")
   
   
   sourceCpp(code = '
-            
             // [[Rcpp::depends(RcppArmadillo)]]
             #include <RcppArmadillo.h>
             #include <omp.h>
             #include <cmath>
+            #define PI        M_PI    /* pi */
             // [[Rcpp::plugins(openmp)]]
             
             using namespace Rcpp;
@@ -26,10 +25,10 @@
             
             // [[Rcpp::export]]
             NumericVector dnormpar(NumericVector x){
-            double c = 1/sqrt(2*M_PI);
+            double c = 1/sqrt(2*PI);
             int n = x.size();
             NumericVector ret(n);
-            omp_set_num_threads(10);
+            
             #pragma omp parallel for
             for(int i=0; i<n; ++i)
             ret[i] = exp(-x[i]*x[i]/2)*c;
@@ -44,7 +43,7 @@
             
             // [[Rcpp::export]]
             NumericMatrix dnormpar_symneg_mat(NumericMatrix x){
-            double c = 1/sqrt(2*M_PI);
+            double c = 1/sqrt(2*PI);
             int nr = x.rows();
             int nc= x.cols();
             NumericMatrix ret(nr,nc);
@@ -66,14 +65,14 @@
             
             // [[Rcpp::export]]
             arma::mat dnormpar_mat_arma(arma::mat x){
-            double c = 1/sqrt(2*M_PI);
+            double c = 1/sqrt(2*PI);
             arma::mat ret = exp(-x*x/2)*c;
             return ret;
             }
             
             // [[Rcpp::export]]
             NumericMatrix dnormpar_mat(NumericMatrix x){
-            double c = 1/sqrt(2*M_PI);
+            double c = 1/sqrt(2*PI);
             int nr = x.rows();
             int nc= x.cols();
             NumericMatrix ret(nr,nc);
@@ -129,8 +128,9 @@
   #           using namespace arma;
   
   likelihood.include0102 <- ' 
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -223,8 +223,9 @@
   #           using namespace arma;
   
   gradient.include0102 <-'  
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -245,7 +246,7 @@
   
   
   arma::mat dnormpar_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -364,9 +365,10 @@
   #           using namespace Rcpp;
   #           using namespace arma;
   
-  likelihood.include0102pert <- ' 
+  likelihood.include0102pert <- '
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -461,9 +463,10 @@
   #           using namespace Rcpp;
   #           using namespace arma;
   
-  gradient.include0102pert <-'  
+  gradient.include0102pert <-' 
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -484,7 +487,7 @@
   
   
   arma::mat dnormpar_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -604,9 +607,10 @@
   # 
   # using namespace Rcpp;
   # using namespace arma;
-  likelihood.include12 <- '  
+  likelihood.include12 <- ' 
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -709,9 +713,9 @@
   # using namespace arma;
   
   gradient.include12 <-'
-  
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -732,7 +736,7 @@
   
   
   arma::mat dnormpar_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -862,9 +866,11 @@
   #           
   #           using namespace Rcpp;
   #           using namespace arma;
+  
   likelihood.include12pert <- '  
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -960,7 +966,6 @@
 #grad12pert
 {
   
-  
   #sourceCpp(code = '
   # // [[Rcpp::depends(RcppArmadillo)]]
   # #include <RcppArmadillo.h>
@@ -969,8 +974,9 @@
   # using namespace arma;
   
   gradient.include12pert <-'
+  #define PI        M_PI    /* pi */
   arma::mat dnormpar_symneg_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -991,7 +997,7 @@
   
   
   arma::mat dnormpar_mat(arma::mat x){
-  double c = 1/sqrt(2*M_PI);
+  double c = 1/sqrt(2*PI);
   int nr = x.n_rows;
   int nc= x.n_cols;
   arma::mat ret(nr,nc);
@@ -1112,231 +1118,6 @@
                                        inc=gradient.include12pert, plugin="RcppArmadillo",settings = settings)
 }
 
-{
-  # sourceCpp(code = '
-  # // [[Rcpp::depends(RcppArmadillo)]]
-  #           // [[Rcpp::depends(RcppEigen)]]
-  #           // [[Rcpp::depends(RcppNumerical)]]
-  #           #include <RcppArmadillo.h>
-  #           #include <RcppNumerical.h>
-  #           
-  #           using namespace Numer;
-  #           using namespace Rcpp;
-  #           using namespace arma;
-  #           
-  #           using Rcpp::NumericVector;
-  #           using Rcpp::NumericMatrix;
-  #           using arma::vec;
-  #           typedef Eigen::Map<Eigen::MatrixXd> MapMat;
-  #           typedef Eigen::Map<Eigen::VectorXd> MapVec;
-  #           
-  #           arma:: vec matmult_mv(NumericMatrix M, NumericVector c) {
-  #           arma:: vec mult= as<arma::mat>(M)*as<arma::vec>(c) ;
-  #           return mult ;
-  #           };
-  #           
-  #           double matmult_vv(NumericVector m, NumericMatrix c) {
-  #           double mult= arma::as_scalar(as<arma::vec>(m).t()*as<arma::mat>(c)) ;
-  #           return mult ;
-  #           }
-  # 
-  #           NumericMatrix dnormpar_mat(NumericMatrix x){
-  #           double c = 1/sqrt(2*M_PI);
-  #           int nr = x.rows();
-  #           int nc= x.cols();
-  #           NumericMatrix ret(nr,nc);
-  #           #pragma omp parallel for if(nc> 50)
-  #           for(int i=0; i<nr; ++i){
-  #           for(int j=0; j<nc; ++j){
-  #           
-  #           ret(i,j) = exp(-x(i,j)*x(i,j)/2)*c;
-  #           }
-  #           }
-  #           return ret;
-  #           } 
-  # 
-  #           NumericMatrix pnorm_ltbl_cpp(NumericMatrix x,NumericVector tbl){
-  #           int nr = x.rows();
-  #           int nc= x.cols();
-  #           NumericMatrix p(nr,nc);
-  #           #pragma omp parallel for if(nc> 50)
-  #           for(int i=0; i<nr; ++i){
-  #           for(int j=0; j<nc; ++j){
-  # 
-  #           if (x(i,j)<(-7)) {
-  #           p(i,j) = 0;
-  #           } else if (x(i,j)>7) {
-  #           p(i,j) = 1;
-  #           } else {
-  #           p(i,j) = tbl[round((x(i,j)-(-7))*pow(10,4))];
-  # 
-  #           }
-  #           }
-  #           }
-  #           return p;
-  #           }
-  # 
-  #           class h01: public Numer::Func
-  #           {
-  #           private:
-  #           const Rcpp::NumericVector tbl;
-  #           const Rcpp::NumericVector b;
-  #           const Rcpp::NumericVector g;
-  #           const Rcpp::NumericVector a;
-  #           const Rcpp::NumericMatrix X;
-  #           const Rcpp::NumericVector V;
-  #           const Rcpp::NumericVector D;
-  #           
-  #           public:
-  #           
-  #           h01(const Rcpp::NumericVector tbl_,const Rcpp::NumericVector b_,const Rcpp::NumericVector g_, const Rcpp::NumericVector a_, const Rcpp::NumericMatrix x_, const Rcpp::NumericVector v_, const Rcpp::NumericVector d_) : tbl(tbl_),b(b_), g(g_), a(a_), X(x_), V(v_), D(d_) {}
-  #           
-  #           double operator()(const double& t) const
-  #           {
-  #           int n=X.rows();
-  #           arma:: vec Xb=matmult_mv(X,b);
-  #           arma:: vec R= (log(as<arma::vec>(V))-Xb-log(t));
-  #           NumericMatrix Rr= as<NumericMatrix>(wrap(R));
-  #           NumericMatrix dnormRRn= dnormpar_mat(Rr/a[0]);
-  #           double nomi= (matmult_vv(D,dnormRRn))/(n*a[0]*t);
-  #           NumericMatrix pnormRRn= pnorm_ltbl_cpp(Rr/a[1],tbl);
-  #           double denomi= (matmult_vv(g,pnormRRn))/n;
-  #           return nomi/denomi;
-  #           }
-  #           };
-  #           
-  #           // [[Rcpp::export]]
-  #           double integrate_test01(const double &lower,const double &upper,const Rcpp::NumericVector &tbl,const Rcpp::NumericVector &b, const Rcpp::NumericVector &g,const Rcpp::NumericVector &a, Rcpp::NumericMatrix &x, Rcpp::NumericVector &v, Rcpp::NumericVector &d)
-  #           {
-  #           h01 f(tbl,b,g,a,x,v,d);
-  #           double err_est;
-  #           int err_code;
-  #           const double res = integrate(f, lower, upper, err_est, err_code);
-  #           return res;
-  #           //return Rcpp::List::create(
-  #           //Rcpp::Named("approximate") = res,
-  #           //Rcpp::Named("error_estimate") = err_est,
-  #           //Rcpp::Named("error_code") = err_code
-  #           //);
-  #           }
-  # 
-  #           // [[Rcpp::export]]
-  #           
-  #           NumericVector H01(NumericVector& t,const NumericVector& table,const NumericVector& beta, const NumericVector& gamma,const NumericVector& a_n, const NumericMatrix& X, const NumericVector& V, const NumericVector& delta){
-  #           int n = t.size();
-  #           NumericVector tbl = table;
-  #           NumericVector b = beta;
-  #           NumericVector g = gamma;
-  #           NumericVector a = a_n;
-  #           NumericMatrix x = X;
-  #           NumericVector v = V;
-  #           NumericVector d = delta;
-  #           double lower;
-  #           double upper;
-  #           NumericVector ret(n);
-  #           for(int i=0; i<(n-1); ++i){
-  #           ret[i] = integrate_test01(lower=t[i],upper=t[i+1],tbl,b,g,a,x,v,d);
-  #           }
-  #           return ret;
-  #           }
-  #           ')
-}
 
-{
-  # sourceCpp(code='
-  # // [[Rcpp::depends(RcppArmadillo)]]
-  #           #include <RcppArmadillo.h>
-  # 
-  #           using namespace Rcpp;
-  #           using namespace arma;
-  #           
-  # arma:: vec matmult_mv(NumericMatrix M, NumericVector c) {
-  #           arma:: vec mult= as<arma::mat>(M)*as<arma::vec>(c) ;
-  #           return mult ;
-  #           };
-  #           
-  #           double matmult_vv(NumericVector m, NumericMatrix c) {
-  #           double mult= arma::as_scalar(as<arma::vec>(m).t()*as<arma::mat>(c)) ;
-  #           return mult ;
-  #           }
-  #           
-  #           NumericMatrix dnormpar_mat(NumericMatrix x){
-  #           double c = 1/sqrt(2*M_PI);
-  #           int nr = x.rows();
-  #           int nc= x.cols();
-  #           NumericMatrix ret(nr,nc);
-  #           #pragma omp parallel for if(nc> 50)
-  #           for(int i=0; i<nr; ++i){
-  #           for(int j=0; j<nc; ++j){
-  #           
-  #           ret(i,j) = exp(-x(i,j)*x(i,j)/2)*c;
-  #           }
-  #           }
-  #           return ret;
-  #           } 
-  #           
-  #           NumericMatrix pnorm_ltbl_cpp(NumericMatrix x,NumericVector tbl){
-  #           int nr = x.rows();
-  #           int nc= x.cols();
-  #           NumericMatrix p(nr,nc);
-  #           //#pragma omp parallel for if(nc> 50)
-  #           for(int i=0; i<nr; ++i){
-  #           for(int j=0; j<nc; ++j){
-  #           
-  #           if (x(i,j)<(-5)) {
-  #           p(i,j) = 0;
-  #           } else if (x(i,j)>5) {
-  #           p(i,j) = 1;
-  #           } else {
-  #           p(i,j) = tbl[round((x(i,j)-(-5))*pow(10,4))];
-  #           
-  #           }
-  #           }
-  #           }
-  #           return p;
-  #           }
-  #           
-  #           // [[Rcpp::export]]
-  #           double h01(double t,NumericVector tbl, NumericMatrix X, NumericVector b,NumericVector a, NumericVector g, NumericVector V, NumericVector D){
-  #           int n=X.rows();
-  #           arma:: vec Xb=matmult_mv(X,b);
-  #           arma:: vec R= (log(as<arma::vec>(V))-Xb-log(t));
-  #           NumericMatrix Rr= as<NumericMatrix>(wrap(R));
-  #           NumericMatrix dnormRRn= dnormpar_mat(Rr/a[0]);
-  #           double nomi= (matmult_vv(D,dnormRRn))/(n*a[0]*t);
-  #           NumericMatrix pnormRRn= pnorm_ltbl_cpp(Rr/a[1],tbl);
-  #           double denomi= (matmult_vv(g,pnormRRn))/n;
-  #           return nomi/denomi;
-  #           }
-  #           ')
-}
+#
 
-{
-  # sourceCpp(code = '#include <Rcpp.h>
-  #           //#include <omp.h>
-  #           using namespace Rcpp;
-  #            // [[Rcpp::export]]
-  #            SEXP pnorm_ltbl_cpp(SEXP xx,SEXP table){
-  #               NumericMatrix x = as<Rcpp::NumericMatrix>(xx);
-  #               NumericVector tbl = as<Rcpp::NumericVector>(table);
-  #           int nr = x.rows();
-  #           int nc= x.cols();
-  #           NumericMatrix p(nr,nc);
-  #           #pragma omp parallel for if(nc> 50)
-  #           for(int i=0; i<nr; ++i){
-  #           for(int j=0; j<nc; ++j){
-  # 
-  #           if (x(i,j)<(-5)) {
-  #           p(i,j) = 0;
-  #           } else if (x(i,j)>5) {
-  #           p(i,j) = 1;
-  #           } else {
-  #           p(i,j) = tbl[round((x(i,j)-(-5))*pow(10,4))];
-  # 
-  #           }
-  #           }
-  #           }
-  #           return p;
-  #           }
-  #           ')
-}
